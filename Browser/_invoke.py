@@ -1,5 +1,5 @@
 import re
-import typing
+
 from ._api_types import Error
 
 
@@ -24,10 +24,6 @@ def find_frame(parent, frame_selector: str):
         child_frames = parent.child_frames
     else:
         raise TypeError("参数 parent 应当是 Page 类型或 Frame 类型。")
-    # try:
-    #     child_frames = parent.main_frame.child_frames
-    # except AttributeError:
-    #     child_frames = parent.child_frames
     for frame in child_frames:
         if selector == getattr(frame, engine):
             content_frame = frame
