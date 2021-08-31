@@ -3,16 +3,16 @@ import re
 from ._api_types import Error
 
 
-def determine_element(active_page, selector: str):
+def determine_element(active, selector: str, timeout: float = None):
     if is_frame_piercing_selector(selector):
         frame_selector, element_selector = split_frame_and_element_selector(selector)
-        frame = find_frame(active_page, frame_selector)
+        frame = find_frame(active, frame_selector)
         while is_frame_piercing_selector(element_selector):
             frame_selector, element_selector = split_frame_and_element_selector(element_selector)
             frame = find_frame(frame, frame_selector)
-        return frame.query_selector(element_selector)
+        return frame.wait_for_selector(element_selector, timeout=timeout)
     else:
-        return active_page.query_selector(selector)
+        return active.wait_for_selector(selector, timeout=timeout)
 
 
 def find_frame(parent, frame_selector: str):
