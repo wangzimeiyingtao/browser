@@ -348,3 +348,20 @@ class PlaywrightManager:
             raise no_opener
         else:
             self._interaction = self._page
+
+    def switch_frame_by_index(self, index: int):
+        """根据索引选择frame。"""
+        self._frame = self._page.frames[index]
+        self._interaction = self._frame
+
+    def switch_frame(self, url: str = None, name: str = None):
+        """返回匹配指定条件的帧。 必须指定名称或网址。
+
+        :param url: glob 模式、正则表达式模式或谓词接收框架的 url 作为 URL 对象。 可选的。
+        :param name: 在 iframe 的 name 属性中指定的框架名称。 可选的。
+        """
+        self._frame = self._page.frame(url=url, name=name)
+        if self._frame is None:
+            no_such_frame = Error(f"没有url={url}，name={name}的Frame。")
+            raise no_such_frame
+        self._interaction = self._frame
