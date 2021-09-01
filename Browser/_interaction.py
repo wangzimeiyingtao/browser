@@ -2,7 +2,7 @@ import typing
 
 from ._api_structures import Position
 from ._api_types import Error
-from ._invoke import determine_element, find_frame
+from ._invoke import determine_element
 
 NoneType = type(None)
 
@@ -440,18 +440,92 @@ class Interaction:
         """返回元素是否被禁用，与启用相反。"""
         return self._find_element_cross_frame(selector).is_disabled()
 
-    def is_editable(self, selector: str):
+    def is_editable(self, selector: str) -> bool:
         """返回元素是否可编辑。"""
         return self._find_element_cross_frame(selector).is_editable()
 
-    def is_enabled(self, selector: str):
+    def is_enabled(self, selector: str) -> bool:
         """返回元素是否被启用。"""
         return self._find_element_cross_frame(selector).is_enabled()
 
-    def is_hidden(self, selector: str):
+    def is_hidden(self, selector: str) -> bool:
         """返回元素是否隐藏，与可见相反。 不匹配任何元素的选择器被认为是隐藏的。"""
         return self._find_element_cross_frame(selector).is_hidden()
 
-    def is_visible(self, selector: str):
+    def is_visible(self, selector: str) -> bool:
         """返回元素是否可见。 不匹配任何元素的选择器被认为是不可见的。"""
         return self._find_element_cross_frame(selector).is_visible()
+
+    def press(
+            self,
+            selector: str,
+            key: str,
+            delay: float = None,
+            timeout: float = None,
+            no_wait_after: bool = None,
+    ) -> None:
+        """模拟手动输入。
+
+        聚焦元素，然后使用keyboard.down(key) 和keyboard.up(key)。
+        key 可以指定预期的 keyboardEvent.key 值或要为其生成文本的单个字符。 可以在此处找到键值的超集。 键的例子是：
+        F1 - F12, Digit0- Digit9, KeyA- KeyZ, 反引号, 减号, 等号, 反斜杠, Backspace, Tab, Delete, Escape, ArrowDown, End,
+        Enter, Home, Insert, PageDown, PageUp, ArrowRight, ArrowUp, 等等。
+
+        还支持以下修改快捷键：Shift、Control、Alt、Meta、ShiftLeft。
+
+        按住 Shift 键将键入与大写键对应的文本。
+
+        如果键是单个字符，则它区分大小写，因此值a和A将生成不同的文本。
+
+        也支持快捷键，例如键：“Control+o”或键：“Control+Shift+T”。 当使用修饰符指定时，在按下后续键的同时按下并按住修饰符。
+
+        :param selector: 用于搜索元素的选择器。如果有多个元素满足选择器，将使用第一个。
+        :param key: 要按下的键的名称或要生成的字符，例如 ArrowLeft 或 a。
+        :param delay: 在 keydown 和 keyup 之间等待的时间（以毫秒为单位）。 默认为 0。
+        :param timeout: 以毫秒为单位的最长时间，默认为 30 秒，传递 0 以禁用超时。
+            可以使用 browser_context.set_default_timeout(timeout) 或 page.set_default_timeout(timeout) 方法更改默认值
+        :param no_wait_after: 启动导航的操作正在等待这些导航发生并等待页面开始加载。 可以通过设置此标志选择退出等待。
+            只需要在特殊情况下使用此选项，例如导航到无法访问的页面。 默认为假。
+        """
+        element = self._find_element_cross_frame(selector)
+        element.press(
+            key=key,
+            delay=delay,
+            timeout=timeout,
+            no_wait_after=no_wait_after,
+        )
+
+    def select_option(
+            self,
+            selector,
+            value: typing.Union[str, typing.List[str]] = None,
+            index: typing.Union[int, typing.List[int]] = None,
+            label: typing.Union[str, typing.List[str]] = None,
+            element: typing.Union["ElementHandle", typing.List["ElementHandle"]] = None,
+            timeout: float = None,
+    ) -> typing.List[str]:
+        """此方法等待元素匹配选择器，等待可操作性检查，等待所有指定的选项都出现在 <select> 元素中并选择这些选项。
+
+        如果目标元素不是 <select> 元素，则此方法会引发错误。 但是，如果该元素位于具有关联控件的 <label> 元素内，则将使用该控件。
+
+        返回已成功选择的选项值数组。
+
+        一旦选择了所有提供的选项，就会触发更改和输入事件。
+        :param selector:
+        :param value: 按值选择的选项。 可选的。
+            如果 <select> 具有 multiple 属性，则选择所有给定的选项，否则仅选择与传递的选项之一匹配的第一个选项。
+        :param index: 按索引选择的选项。 可选的。
+        :param label: 按标签选择的选项。 可选的。
+            如果 <select> 具有 multiple 属性，则选择所有给定的选项，否则仅选择与传递的选项之一匹配的第一个选项。
+        :param element: 按 ElementHandle 实例选择选项。 可选的。
+        :param timeout: 以毫秒为单位的最长时间，默认为 30 秒，传递 0 以禁用超时。
+            可以使用 browser_context.set_default_timeout(timeout) 或 page.set_default_timeout(timeout) 方法更改默认值。
+        """
+        element = self._find_element_cross_frame(selector=selector)
+        return element.select_option(
+            timeout=timeout,
+            element=element,
+            index=index,
+            value=value,
+            label=label
+        )
