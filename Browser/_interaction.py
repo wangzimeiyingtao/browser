@@ -2,7 +2,7 @@ import typing
 
 from ._api_structures import Position
 from ._api_types import Error
-from ._invoke import determine_element
+from ._invoke import determine_element, find_frame
 
 NoneType = type(None)
 
@@ -17,11 +17,11 @@ class Interaction:
         else:
             return getattr(self._obj, item)
 
-    def _find_element_cross_frame(self, selector, timeout: float = None):
+    def _find_element_cross_frame(self, selector: str):
         """跨frame搜索元素。
         :param selector: 元素定位器。
         """
-        return determine_element(self._obj, selector, timeout)
+        return determine_element(self._obj, selector=selector)
 
     def check(
             self,
@@ -195,7 +195,7 @@ class Interaction:
             或 page.set_default_timeout(timeout) 方法更改默认值。
         """
         if ">>>" in source or ">>>" in target:
-            unsupported_selector_engine = Error("该方法不支持跨Frame搜索")
+            unsupported_selector_engine = Error("该方法不支持跨 Frame 搜索语法。")
             raise unsupported_selector_engine
         self._obj.drag_and_drop(
             source=source,
@@ -210,7 +210,6 @@ class Interaction:
             selector: str,
             value: str,
             *,
-            force: bool = None,
             no_wait_after: bool = None,
             timeout: float = None,
             clear: bool = True,
@@ -221,7 +220,6 @@ class Interaction:
 
         :param selector: 用于搜索元素的选择器。 如果有多个元素满足选择器，将使用第一个。
         :param value: 为 input 、textarea 或 contenteditable 元素填充的值。
-        :param force: 是否绕过可操作性检查。 默认为 false。
         :param no_wait_after: 启动导航的操作正在等待这些导航发生并等待页面开始加载。
             可以通过设置此标志选择退出等待。
             只需要在特殊情况下使用此选项，例如导航到无法访问的页面。
@@ -236,16 +234,16 @@ class Interaction:
             # 清空
             element.fill(
                 value='',
-                force=force,
+                force=True,
                 no_wait_after=no_wait_after,
                 timeout=timeout,
             )
         # 填充
         element.fill(
             value=value,
-            force=force,
+            force=True,
             no_wait_after=no_wait_after,
-            timeout=timeout,
+            timeout=0,
         )
 
     def focus(self, selector: str):
@@ -257,15 +255,13 @@ class Interaction:
         element = self._find_element_cross_frame(selector)
         element.focus()
 
-    def get_attribute(self, selector: str, name: str, timeout: float = None) -> typing.Union[NoneType, str]:
+    def get_attribute(self, selector: str, name: str) -> typing.Union[NoneType, str]:
         """返回元素属性值。
 
         :param selector: 用于搜索元素的选择器。 如果有多个元素满足选择器，将使用第一个。
         :param name: 要获取其值的属性名称。
-        :param timeout: 以毫秒为单位的最长时间，默认为 30 秒，传递 0 以禁用超时。
-            可以使用 browser_context.set_default_timeout(timeout) 或 page.set_default_timeout(timeout) 方法更改默认值
         """
-        element = self._find_element_cross_frame(selector, timeout=timeout)
+        element = self._find_element_cross_frame(selector)
         return element.get_attribute(name)
 
     def go_back(
@@ -406,3 +402,56 @@ class Interaction:
             timeout=timeout,
             position=position,
         )
+
+    def inner_html(self, selector: str) -> str:
+        """元素的 innerHTML 值。
+
+        :param selector: 用于搜索元素的选择器。 如果有多个元素满足选择器，将使用第一个。
+        """
+        element = self._find_element_cross_frame(selector)
+        return element.inner_html()
+
+    def inner_text(self, selector: str) -> str:
+        """元素的 innerText 值。
+
+        :param selector: 用于搜索元素的选择器。 如果有多个元素满足选择器，将使用第一个。
+        """
+        element = self._find_element_cross_frame(selector)
+        return element.inner_text()
+
+    def input_value(self, selector: str, timeout: float = None) -> str:
+        """元素的 value 属性的值。
+
+        :param selector: 用于搜索元素的选择器。 如果有多个元素满足选择器，将使用第一个。
+        :param timeout: 最大操作时间以毫秒为单位，默认为 30 秒，传递 0 以禁用超时。
+            可以使用 browser_context.set_default_navigation_timeout(timeout)、
+            browser_context.set_default_timeout(timeout)、
+            page.set_default_navigation_timeout(timeout)
+            或 page.set_default_timeout(timeout) 方法更改默认值
+        """
+        element = self._find_element_cross_frame(selector)
+        return element.input_value(timeout=timeout)
+
+    def is_checked(self, selector: str) -> bool:
+        """返回是否选中元素。如果元素不是复选框或单选输入，则引发异常。"""
+        return self._find_element_cross_frame(selector).is_checked()
+
+    def is_disabled(self, selector: str) -> bool:
+        """返回元素是否被禁用，与启用相反。"""
+        return self._find_element_cross_frame(selector).is_disabled()
+
+    def is_editable(self, selector: str):
+        """返回元素是否可编辑。"""
+        return self._find_element_cross_frame(selector).is_editable()
+
+    def is_enabled(self, selector: str):
+        """返回元素是否被启用。"""
+        return self._find_element_cross_frame(selector).is_enabled()
+
+    def is_hidden(self, selector: str):
+        """返回元素是否隐藏，与可见相反。 不匹配任何元素的选择器被认为是隐藏的。"""
+        return self._find_element_cross_frame(selector).is_hidden()
+
+    def is_visible(self, selector: str):
+        """返回元素是否可见。 不匹配任何元素的选择器被认为是不可见的。"""
+        return self._find_element_cross_frame(selector).is_visible()
