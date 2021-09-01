@@ -57,6 +57,7 @@ class PlaywrightManager:
     def connect_over_cdp(
             self,
             endpoint_url: str,
+            browser: SupportedBrowsers = SupportedBrowsers.chromium,
             *,
             headers: typing.Dict[str, str] = None,
             slow_mo: float = None,
@@ -71,7 +72,8 @@ class PlaywrightManager:
         :param slow_mo: 将 Playwright 操作减慢指定的毫秒数。很有用，以便看到正在发生的事情。 默认为 0。
         :param timeout: 等待建立连接的最长时间（以毫秒为单位）。默认为 30000（30 秒）。 传递 0 以禁用超时。
         """
-        self._browser = self._playwright_process.connect_over_cdp(
+        browser_type = getattr(self._playwright_process, browser.name)
+        self._browser = browser_type.connect_over_cdp(
             endpoint_url=endpoint_url,
             headers=headers,
             slow_mo=slow_mo,
