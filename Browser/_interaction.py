@@ -2,7 +2,7 @@ import typing
 
 from ._api_structures import Position
 from ._api_types import Error
-from ._invoke import determine_element
+from ._invoke import determine_element, wait_for_element
 
 NoneType = type(None)
 
@@ -17,11 +17,12 @@ class Interaction:
         else:
             return getattr(self._obj, item)
 
-    def _find_element_cross_frame(self, selector: str):
+    def _find_element_cross_frame(self, selector: str, only=True):
         """跨frame搜索元素。
+        :param only:
         :param selector: 元素定位器。
         """
-        return determine_element(self._obj, selector=selector)
+        return determine_element(self._obj, selector=selector, only=only)
 
     def check(
             self,
@@ -529,3 +530,27 @@ class Interaction:
             value=value,
             label=label
         )
+
+    def query_selector(self, selector: str):
+        """该方法在页面中查找与指定选择器匹配的元素。
+        如果没有元素与选择器匹配，则返回值解析为 null。
+        要等待页面上的元素，请使用 page.wait_for_selector(selector, **kwargs)。
+        """
+        return self._find_element_cross_frame(selector)
+
+    def query_selector_all(self, selector: str):
+        """该方法查找页面内与指定选择器匹配的所有元素。 如果没有元素与选择器匹配，则返回值解析为 []。"""
+        return self._find_element_cross_frame(selector, False)
+
+    def uncheck(self, selector: str):
+        """此方法取消选中元素匹配选择器。"""
+        element = self._find_element_cross_frame(selector)
+        element.uncheck()
+
+    def wait_for_selector(self, selector: str, timeout: float = None):
+        """返回选择器指定的元素满足状态选项时。 如果等待隐藏或分离，则返回 null。
+        等待选择器满足状态选项（从 dom 出现/消失，或变为可见/隐藏）。
+        如果在调用方法选择器的那一刻已经满足条件，该方法将立即返回。
+        如果选择器不满足超时毫秒的条件，该函数将抛出。
+        """
+        return wait_for_element(self._obj, selector, timeout)
