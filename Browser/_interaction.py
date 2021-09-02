@@ -1,4 +1,10 @@
-import typing
+import sys
+
+if sys.version_info >= (3, 8):  # pragma: no cover
+    from typing import Literal, Optional, List, Dict, Union
+else:  # pragma: no cover
+    from typing import Optional, List, Dict, Union
+    from typing_extensions import Literal
 
 from ._api_structures import Position
 from ._api_types import Error
@@ -58,12 +64,12 @@ class Interaction:
             self,
             selector: str,
             *,
-            button: typing.Literal["left", "middle", "right"] = None,
+            button: Literal["left", "middle", "right"] = None,
             click_count: int = None,
             delay: float = None,
             force: bool = None,
-            modifiers: typing.Optional[
-                typing.List[typing.Literal["Alt", "Control", "Meta", "Shift"]]
+            modifiers: Optional[
+                List[Literal["Alt", "Control", "Meta", "Shift"]]
             ] = None,
             no_wait_after: bool = None,
             position: Position = None,
@@ -101,12 +107,12 @@ class Interaction:
             self,
             selector: str,
             *,
-            modifiers: typing.Optional[
-                typing.List[typing.Literal["Alt", "Control", "Meta", "Shift"]]
+            modifiers: Optional[
+                List[Literal["Alt", "Control", "Meta", "Shift"]]
             ] = None,
             position: Position = None,
             delay: float = None,
-            button: typing.Literal["left", "middle", "right"] = None,
+            button: Literal["left", "middle", "right"] = None,
             timeout: float = None,
             force: bool = None,
             no_wait_after: bool = None,
@@ -143,7 +149,7 @@ class Interaction:
             selector: str,
             *,
             event_type: str = None,
-            event_init: typing.Dict = None,
+            event_init: Dict = None,
     ) -> NoneType:
         """触发事件。
 
@@ -256,7 +262,7 @@ class Interaction:
         element = self._find_element_cross_frame(selector)
         element.focus()
 
-    def get_attribute(self, selector: str, name: str) -> typing.Union[NoneType, str]:
+    def get_attribute(self, selector: str, name: str) -> Union[NoneType, str]:
         """返回元素属性值。
 
         :param selector: 用于搜索元素的选择器。 如果有多个元素满足选择器，将使用第一个。
@@ -268,7 +274,7 @@ class Interaction:
     def go_back(
             self,
             timeout: float = None,
-            wait_until: typing.Literal["domcontentloaded", "load", "networkidle"] = None
+            wait_until: Literal["domcontentloaded", "load", "networkidle"] = None
     ):
         """导航到历史记录的上一页。
         返回主要资源响应。
@@ -301,7 +307,7 @@ class Interaction:
     def go_forward(
             self,
             timeout: float = None,
-            wait_until: typing.Literal["domcontentloaded", "load", "networkidle"] = None
+            wait_until: Literal["domcontentloaded", "load", "networkidle"] = None
     ):
         """导航到历史记录的下一页。
         返回主要资源响应。
@@ -336,7 +342,7 @@ class Interaction:
             url: str,
             *,
             timeout: float = None,
-            wait_until: typing.Literal["domcontentloaded", "load", "networkidle"] = None,
+            wait_until: Literal["domcontentloaded", "load", "networkidle"] = None,
             referer: str = None
     ):
         """导航到 `url`
@@ -376,8 +382,8 @@ class Interaction:
             self,
             selector: str,
             timeout: float = None,
-            modifiers: typing.Optional[
-                typing.List[typing.Literal["Alt", "Control", "Meta", "Shift"]]
+            modifiers: Optional[
+                List[Literal["Alt", "Control", "Meta", "Shift"]]
             ] = None,
             position: Position = None,
     ):
@@ -499,12 +505,12 @@ class Interaction:
     def select_option(
             self,
             selector,
-            value: typing.Union[str, typing.List[str]] = None,
-            index: typing.Union[int, typing.List[int]] = None,
-            label: typing.Union[str, typing.List[str]] = None,
-            element: typing.Union["ElementHandle", typing.List["ElementHandle"]] = None,
+            value: Union[str, List[str]] = None,
+            index: Union[int, List[int]] = None,
+            label: Union[str, List[str]] = None,
+            option_element: Union["ElementHandle", List["ElementHandle"]] = None,
             timeout: float = None,
-    ) -> typing.List[str]:
+    ) -> List[str]:
         """此方法等待元素匹配选择器，等待可操作性检查，等待所有指定的选项都出现在 <select> 元素中并选择这些选项。
 
         如果目标元素不是 <select> 元素，则此方法会引发错误。 但是，如果该元素位于具有关联控件的 <label> 元素内，则将使用该控件。
@@ -518,14 +524,14 @@ class Interaction:
         :param index: 按索引选择的选项。 可选的。
         :param label: 按标签选择的选项。 可选的。
             如果 <select> 具有 multiple 属性，则选择所有给定的选项，否则仅选择与传递的选项之一匹配的第一个选项。
-        :param element: 按 ElementHandle 实例选择选项。 可选的。
+        :param option_element: 按 ElementHandle 实例选择选项。 可选的。
         :param timeout: 以毫秒为单位的最长时间，默认为 30 秒，传递 0 以禁用超时。
             可以使用 browser_context.set_default_timeout(timeout) 或 page.set_default_timeout(timeout) 方法更改默认值。
         """
         element = self._find_element_cross_frame(selector=selector)
         return element.select_option(
             timeout=timeout,
-            element=element,
+            element=option_element,
             index=index,
             value=value,
             label=label

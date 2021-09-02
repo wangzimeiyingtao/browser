@@ -1,4 +1,10 @@
-from typing import Optional, TypedDict, Literal, List
+import sys
+
+if sys.version_info >= (3, 8):  # pragma: no cover
+    from typing import Literal, TypedDict, Optional, List
+else:  # pragma: no cover
+    from typing import Optional, List
+    from typing_extensions import Literal, TypedDict
 
 
 class Cookie(TypedDict, total=False):
