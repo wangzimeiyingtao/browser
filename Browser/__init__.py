@@ -1,5 +1,5 @@
-from data_types import SupportedBrowsers
-from playwrightmanager import PlaywrightManager
+from .data_types import SupportedBrowsers
+from .playwrightmanager import PlaywrightManager
 
 __all__ = [
     PlaywrightManager,

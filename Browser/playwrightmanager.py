@@ -43,6 +43,11 @@ class PlaywrightManager:
         self._frame = None  # 激活的frame实例
         self._interaction = None  # 实际与浏览器交互的对象
 
+    def __del__(self):
+        if self._browser:
+            self._browser.close()
+            self._browser = None
+
     @property
     def interaction(self):
         return Interaction(self._interaction)
