@@ -559,4 +559,4 @@ class Interaction:
         如果在调用方法选择器的那一刻已经满足条件，该方法将立即返回。
         如果选择器不满足超时毫秒的条件，该函数将抛出。
         """
-        return wait_for_element(self._obj, selector, timeout)
+        return wait_for_element(self._obj, selector=selector, timeout=timeout)
