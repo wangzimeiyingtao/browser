@@ -331,11 +331,13 @@ class PlaywrightManager:
         """
         self._page.expect_popup()
         self._page = self._context.pages[index]
+        self._page.bring_to_front()
         self._interaction = self._page
 
     def switch_new_page(self):
         """活动浏览器页面切换到最新打开的页面。"""
         self._page = self._page.expect_popup().value
+        self._page.bring_to_front()
         self._interaction = self._page
 
     def switch_opener_page(self):
@@ -348,6 +350,7 @@ class PlaywrightManager:
             no_opener = Error('开启页面已关闭或当前页面没有开启页面。')
             raise no_opener
         else:
+            self._page.bring_to_front()
             self._interaction = self._page
 
     def switch_frame_by_index(self, index: int):
@@ -368,6 +371,13 @@ class PlaywrightManager:
         if self._frame is None:
             no_such_frame = Error(f"没有url={url}，name={name}的Frame。")
             raise no_such_frame
+        if self._frame.parent_frame is None:
+            self._interaction = self._frame.page
+        else:
+            self._interaction = self._frame
+
+    def switch_main_frame(self):
+        self._frame = self._frame.page.main_frame
         if self._frame.parent_frame is None:
             self._interaction = self._frame.page
         else:
