@@ -7,3 +7,7 @@ class Error(Exception):
         self.name: Optional[str] = None
         self.stack: Optional[str] = None
         super().__init__(message)
+
+
+class TimeoutError(Error):
+    pass
