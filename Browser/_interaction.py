@@ -553,10 +553,11 @@ class Interaction:
         element = self._find_element_cross_frame(selector)
         element.uncheck()
 
-    def wait_for_selector(self, selector: str, timeout: float = None):
+    def wait_for_selector(self, selector: str, timeout: float = None,
+                          state: Literal["attached", "detached", "hidden", "visible"] = None):
         """返回选择器指定的元素满足状态选项时。 如果等待隐藏或分离，则返回 null。
         等待选择器满足状态选项（从 dom 出现/消失，或变为可见/隐藏）。
         如果在调用方法选择器的那一刻已经满足条件，该方法将立即返回。
         如果选择器不满足超时毫秒的条件，该函数将抛出。
         """
-        return wait_for_element(self._obj, selector=selector, timeout=timeout)
+        return wait_for_element(self._obj, selector=selector, timeout=timeout, state=state)
