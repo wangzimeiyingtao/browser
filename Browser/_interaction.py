@@ -103,6 +103,24 @@ class Interaction:
             timeout=timeout
         )
 
+    def cell_text(self, *, column_header: str = None, row_header: str = None):
+        """根据列标题 `column_header` 和行标题 `row_header` 获得文本值。
+        仅提供行标题 `row_header` 时，将获得其右侧最近的一个文本值。
+
+        :param column_header: 列标题。
+        :param row_header: 行标题。
+        """
+        if column_header is None:
+            element_handler = self._obj.query_selector(f"*:right-of(:text('{row_header}'))")
+            if element_handler is None:
+                raise Error(f"未找到匹配行标题 {row_header} 的元素。")
+            return element_handler.inner_text()
+        column_header_handler = self._obj.query_selector(f"text='{column_header}' >> visible=true")
+        row_header_handler = self._obj.query_selector(f"text='{row_header}' >> visible=true")
+        x = column_header_handler.bounding_box()["x"] + column_header_handler.bounding_box()["width"] / 2
+        y = row_header_handler.bounding_box()["y"] + row_header_handler.bounding_box()["height"] / 2
+        return self._obj.evaluate_handle(f"document.elementFromPoint({x},{y}).innerText")
+
     def dblclick(
             self,
             selector: str,
