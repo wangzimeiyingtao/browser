@@ -103,23 +103,31 @@ class Interaction:
             timeout=timeout
         )
 
-    def cell_text(self, *, column_header: str = None, row_header: str = None):
+    def cell_inner_text(self, *, column_header: str = None, row_header: str = None):
         """根据列标题 `column_header` 和行标题 `row_header` 获得文本值。
-        仅提供行标题 `row_header` 时，将获得其右侧最近的一个文本值。
+        仅提供行标题 `row_header` 时，将获得其右侧最近的一个字段的文本值。
 
-        :param column_header: 列标题。
-        :param row_header: 行标题。
+        :param column_header: 列标题
+        :param row_header: 行标题
         """
-        if column_header is None:
-            element_handler = self._obj.query_selector(f"*:right-of(:text('{row_header}'))")
-            if element_handler is None:
-                raise Error(f"未找到匹配行标题 {row_header} 的元素。")
-            return element_handler.inner_text()
-        column_header_handler = self._obj.query_selector(f"text='{column_header}' >> visible=true")
-        row_header_handler = self._obj.query_selector(f"text='{row_header}' >> visible=true")
-        x = column_header_handler.bounding_box()["x"] + column_header_handler.bounding_box()["width"] / 2
-        y = row_header_handler.bounding_box()["y"] + row_header_handler.bounding_box()["height"] / 2
-        return self._obj.evaluate_handle(f"document.elementFromPoint({x},{y}).innerText")
+        element = self.get_cell(column_header=column_header, row_header=row_header)
+        return element.inner_text()
+
+    def cell_input_value(self, *, column_header: str = None, row_header: str = None):
+        """根据列标题 `column_header` 和行标题 `row_header` 获得 <input> 或 <textarea> 或 <select> 的 `value` 属性值。
+        仅提供行标题 `row_header` 时，将获得其右侧最近的一个输入字段的 `value` 属性值。
+        对于非输入元素抛出异常。
+
+        :param column_header: 列标题
+        :param row_header: 行标题
+        """
+        _el = self.get_cell(column_header=column_header, row_header=row_header)
+        tag_name = str(_el.get_property("tagName")).lower()
+        if tag_name != "input" or tag_name != "textarea" or tag_name != 'contenteditable':
+            raise Error(
+                "cell_input_value 仅作用于 <input>|<textarea>|<select> 元素，"
+                f"不支持 <{tag_name}>。")
+        return _el.get_attribute("value")
 
     def dblclick(
             self,
@@ -288,6 +296,30 @@ class Interaction:
         """
         element = self._find_element_cross_frame(selector)
         return element.get_attribute(name)
+
+    def get_cell(self, column_header: str = None, row_header: str = None):
+        """获得单元格。
+        如果有一个东西看起来像二维表，那么就可以使用行标题或列标题去取得单元格。
+        如果只提供行标题，将取得行标题匹配的元素右侧的元素。
+        如果提供了列标题和行标题，将计算列标题匹配的元素和行标题匹配的元素所标识的像素坐标，取得处于该坐标位置的元素。
+
+        :param column_header: 列标题
+        :param row_header: 行标题
+        """
+        if column_header is None and row_header is not None:
+            element_handler = self._obj.query_selector(f"*:right-of(:text('{row_header}'))")
+            if element_handler is None:
+                raise Error(f"未找到匹配行标题 {row_header} 的元素。")
+            return element_handler
+        column_header_handler = self._obj.query_selector(f"text='{column_header}' >> visible=true")
+        row_header_handler = self._obj.query_selector(f"text='{row_header}' >> visible=true")
+        if column_header_handler is None:
+            raise Error(f"未找到匹配列标题 {column_header} 的元素。")
+        elif row_header_handler is None:
+            raise Error(f"未找到匹配行标题 {row_header} 的元素。")
+        x = column_header_handler.bounding_box()["x"] + column_header_handler.bounding_box()["width"] / 2
+        y = row_header_handler.bounding_box()["y"] + row_header_handler.bounding_box()["height"] / 2
+        return self._obj.evaluate_handle(f"document.elementFromPoint({x},{y})")
 
     def go_back(
             self,
