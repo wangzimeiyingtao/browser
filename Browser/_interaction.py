@@ -310,13 +310,21 @@ class Interaction:
             if element_handler is None:
                 raise Error(f"未找到匹配行标题 {row_header} 的元素。")
             return element_handler
-        column_header_handler = self._obj.query_selector(f"text='{column_header}' >> visible=true")
+        column_header_handlers = self._obj.query_selector_all(f"text='{column_header}' >> visible=true")
         row_header_handler = self._obj.query_selector(f"text='{row_header}' >> visible=true")
-        if column_header_handler is None:
+        x = ""  # 需要根据行标题确定使用的列标题是哪一个
+        if not column_header_handlers:
             raise Error(f"未找到匹配列标题 {column_header} 的元素。")
         elif row_header_handler is None:
             raise Error(f"未找到匹配行标题 {row_header} 的元素。")
-        x = column_header_handler.bounding_box()["x"] + column_header_handler.bounding_box()["width"] / 2
+        elif len(column_header_handlers) > 1:
+            min_x = row_header_handler.bounding_box()["x"] + row_header_handler.bounding_box()["width"] / 2
+            for column_header_handler in column_header_handlers:
+                x = column_header_handler.bounding_box()["x"] + column_header_handler.bounding_box()["width"] / 2
+                if x > min_x:
+                    break
+        else:
+            x = column_header_handlers[0].bounding_box()["x"] + column_header_handlers[0].bounding_box()["width"] / 2
         y = row_header_handler.bounding_box()["y"] + row_header_handler.bounding_box()["height"] / 2
         return self._obj.evaluate_handle(f"document.elementFromPoint({x},{y})")
 
