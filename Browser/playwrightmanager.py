@@ -114,6 +114,8 @@ class PlaywrightManager:
         """
         if args is None:
             args = ['--start-maximized']
+        if headless is None:
+            headless = False
         if self._browser is not None:
             print("已有打开的浏览器，请勿重复打开。")
             return
