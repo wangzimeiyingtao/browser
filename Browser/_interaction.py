@@ -110,8 +110,7 @@ class Interaction:
         :param column_header: 列标题
         :param row_header: 行标题
         """
-        element = self.get_cell(column_header=column_header, row_header=row_header)
-        return element.inner_text()
+        return self.get_cell(column_header=column_header, row_header=row_header).inner_text()
 
     def cell_input_value(self, *, column_header: str = None, row_header: str = None):
         """根据列标题 `column_header` 和行标题 `row_header` 获得 <input> 或 <textarea> 或 <select> 的 `value` 属性值。
