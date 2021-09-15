@@ -112,6 +112,8 @@ class PlaywrightManager:
         :param slow_mo: 将 Playwright 操作减慢指定的毫秒数。很有用，可以看到正在发生的事情。
         :param timeout: 等待浏览器实例启动的最长时间（以毫秒为单位）。 默认为 30000（30 秒）。 传递 0 以禁用超时。
         """
+        if args is None:
+            args = ['--start-maximized']
         if self._browser is not None:
             print("已有打开的浏览器，请勿重复打开。")
             return
@@ -198,6 +200,8 @@ class PlaywrightManager:
             width <int> 以像素为单位的页面宽度。
             height <int> 以像素为单位的页面高度。
         """
+        if no_viewport is None:
+            no_viewport = True
         self._context = self._browser.new_context(
             accept_downloads=accept_downloads,
             base_url=base_url,
@@ -288,6 +292,8 @@ class PlaywrightManager:
         if self._context is not None:
             self._page = self._context.new_page()
         else:
+            if no_viewport is None:
+                no_viewport = True
             self._page = self._browser.new_page(
                 accept_downloads=accept_downloads,
                 base_url=base_url,
