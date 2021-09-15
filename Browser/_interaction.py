@@ -123,7 +123,7 @@ class Interaction:
         """
         _el = self.get_cell(column_header=column_header, row_header=row_header)
         tag_name = str(_el.get_property("tagName")).lower()
-        if tag_name != "input" or tag_name != "textarea" or tag_name != 'contenteditable':
+        if tag_name not in ["input", "textarea", "select"]:
             raise Error(
                 "cell_input_value 仅作用于 <input>|<textarea>|<select> 元素，"
                 f"不支持 <{tag_name}>。")
