@@ -599,7 +599,8 @@ class Interaction:
             selector: str,
             index: int = None,
             label: str = None,
-            search_content: str = None
+            search_content: str = None,
+            delay: float = None
     ):
         """仅供使用了Ant-Design的站点使用。
         """
@@ -617,8 +618,11 @@ class Interaction:
             select_dropdown = self._obj.query_selector(".ant-select-dropdown:not(.ant-select-dropdown-hidden)")
             search_filed = self._obj.query_selector(".ant-select-search__field >> visible=true")
         if search_filed:
-            search_filed.fill("")
-            search_filed.fill(search_content)
+            with self._obj.expect_request_finished():
+                search_filed.fill("")
+                search_filed.fill(search_content)
+        if delay:
+            self._obj.wait_for_timeout(delay)
         options = select_dropdown.query_selector_all("li")
         matched = False
         if label:

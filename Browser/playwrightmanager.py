@@ -80,6 +80,7 @@ class PlaywrightManager:
         )
         self._context = self._browser.contexts[0]
         self._page = self._context.pages[0]
+        self._interaction = self._page
 
     def new_browser(
             self,
