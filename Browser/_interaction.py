@@ -7,7 +7,7 @@ else:  # pragma: no cover
     from typing_extensions import Literal
 
 from ._api_structures import Position
-from ._api_types import Error
+from ._api_types import Error, NoSuchOptionError
 from ._invoke import determine_element, wait_for_element
 
 NoneType = type(None)
@@ -561,7 +561,7 @@ class Interaction:
 
     def select_option(
             self,
-            selector,
+            selector: str,
             value: Union[str, List[str]] = None,
             index: Union[int, List[int]] = None,
             label: Union[str, List[str]] = None,
@@ -593,6 +593,48 @@ class Interaction:
             value=value,
             label=label
         )
+
+    def select_option_for_ant(
+            self,
+            selector: str,
+            index: int = None,
+            label: str = None,
+            search_content: str = None
+    ):
+        """仅供使用了Ant-Design的站点使用。
+        """
+        select = self._find_element_cross_frame(selector)
+        if not select:
+            raise Error(f"未找到匹配选择器 {selector} 的元素")
+        if "ant-" not in select.get_attribute("class"):
+            raise Error("select_option_for_ant 只适用于使用 ant-design 组件的站点")
+        select.click()
+        if select.content_frame():
+            select_dropdown = select.content_frame().query_selector(
+                ".ant-select-dropdown:not(.ant-select-dropdown-hidden)")
+            search_filed = select.content_frame().query_selector(".ant-select-search__field__placeholder")
+        else:
+            select_dropdown = self._obj.query_selector(".ant-select-dropdown:not(.ant-select-dropdown-hidden)")
+            search_filed = self._obj.query_selector(".ant-select-search__field >> visible=true")
+        if search_filed:
+            search_filed.fill("")
+            search_filed.fill(search_content)
+        options = select_dropdown.query_selector_all("li")
+        matched = False
+        if label:
+            for opt in options:
+                if label == opt.inner_text():
+                    opt.click()
+                    return
+        elif index:
+            try:
+                opt = options[index]
+                opt.click()
+                return
+            except AssertionError:  # 压制数组越界异常
+                ...
+        if not matched:
+            raise NoSuchOptionError(f"无法找到选项值")
 
     def query_selector(self, selector: str):
         """该方法在页面中查找与指定选择器匹配的元素。
