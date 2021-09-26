@@ -103,24 +103,24 @@ class Interaction:
             timeout=timeout
         )
 
-    def cell_inner_text(self, *, column_header: str = None, row_header: str = None):
-        """根据列标题 `column_header` 和行标题 `row_header` 获得文本值。
+    def cell_inner_text(self, *, row_header: str = None, column_headers: List[str] = None):
+        """根据列标题 `column_headers` 和行标题 `row_header` 获得文本值。
         仅提供行标题 `row_header` 时，将获得其右侧最近的一个字段的文本值。
 
-        :param column_header: 列标题
+        :param column_headers: 列标题
         :param row_header: 行标题
         """
-        return self.get_cell(column_header=column_header, row_header=row_header).inner_text()
+        return self.get_table_cell(row_header=row_header, column_headers=column_headers).inner_text()
 
-    def cell_input_value(self, *, column_header: str = None, row_header: str = None):
-        """根据列标题 `column_header` 和行标题 `row_header` 获得 <input> 或 <textarea> 或 <select> 的 `value` 属性值。
+    def cell_input_value(self, *, row_header: str = None, column_headers: List[str] = None):
+        """根据列标题 `column_headers` 和行标题 `row_header` 获得 <input> 或 <textarea> 或 <select> 的 `value` 属性值。
         仅提供行标题 `row_header` 时，将获得其右侧最近的一个输入字段的 `value` 属性值。
         对于非输入元素抛出异常。
 
-        :param column_header: 列标题
+        :param column_headers: 列标题
         :param row_header: 行标题
         """
-        _el = self.get_cell(column_header=column_header, row_header=row_header)
+        _el = self.get_table_cell(row_header=row_header, column_headers=column_headers)
         tag_name = str(_el.get_property("tagName")).lower()
         if tag_name not in ["input", "textarea", "select"]:
             raise Error(
@@ -296,37 +296,65 @@ class Interaction:
         element = self._find_element_cross_frame(selector)
         return element.get_attribute(name)
 
-    def get_cell(self, column_header: str = None, row_header: str = None):
+    def get_table_cell(self, row_header: str, column_headers: List[str] = None):
         """获得单元格。
         如果有一个东西看起来像二维表，那么就可以使用行标题或列标题去取得单元格。
-        如果只提供行标题，将取得行标题匹配的元素右侧的元素。
-        如果提供了列标题和行标题，将计算列标题匹配的元素和行标题匹配的元素所标识的像素坐标，取得处于该坐标位置的元素。
+        如果不提供 `column_headers` ，那么将返回文本值匹配 `row_header` 的元素右侧的一个元素。
 
-        :param column_header: 列标题
+        :param column_headers: 列标题
         :param row_header: 行标题
         """
-        if column_header is None and row_header is not None:
-            element_handler = self._obj.query_selector(f"*:right-of(:text('{row_header}'))")
-            if element_handler is None:
-                raise Error(f"未找到匹配行标题 {row_header} 的元素。")
-            return element_handler
-        column_header_handlers = self._obj.query_selector_all(f"text='{column_header}' >> visible=true")
-        row_header_handler = self._obj.query_selector(f"text='{row_header}' >> visible=true")
-        x = ""  # 需要根据行标题确定使用的列标题是哪一个
-        if not column_header_handlers:
-            raise Error(f"未找到匹配列标题 {column_header} 的元素。")
-        elif row_header_handler is None:
-            raise Error(f"未找到匹配行标题 {row_header} 的元素。")
-        elif len(column_header_handlers) > 1:
-            min_x = row_header_handler.bounding_box()["x"] + row_header_handler.bounding_box()["width"] / 2
-            for column_header_handler in column_header_handlers:
-                x = column_header_handler.bounding_box()["x"] + column_header_handler.bounding_box()["width"] / 2
-                if x > min_x:
-                    break
+
+        def get_top_column_header_element(cell_text, limit_x):
+            __column_header_elements = self._obj.query_selector_all(f"text='{cell_text}'")
+            for __column_header_element in __column_header_elements:
+                if __column_header_element.bounding_box()["x"] >= limit_x:
+                    return __column_header_element
+
+        def get_target_column_header_element(cell_text, limit_min_x, limit_max_x):
+            __column_header_elements = self._obj.query_selector_all(f"text='{cell_text}'")
+            for __column_header_element in __column_header_elements:
+                if (
+                        __column_header_element.bounding_box()["x"] >= limit_min_x
+                        and __column_header_element.bounding_box()["x"]
+                        + __column_header_element.bounding_box()["width"] <= limit_max_x
+                ):
+                    return __column_header_element
+
+        row_header_element = self._obj.query_selector(f"text='{row_header}'")
+        if not column_headers:
+            return self._obj.query_selector(f"*:right-of(:text('{row_header}'))")
+        row_header_element_box = row_header_element.bounding_box()
+        row_header_element_position = Position(
+            x=row_header_element_box["x"] + row_header_element_box["width"] / 2,
+            y=row_header_element_box["y"] + row_header_element_box["height"] / 2
+        )
+        column_min_x = row_header_element_box["x"] + row_header_element_box["width"]
+        if len(column_headers) > 1:
+            top_column_header_element = get_top_column_header_element(column_headers[0], column_min_x)
+            coordinate_range = (
+                top_column_header_element.bounding_box()["x"],
+                top_column_header_element.bounding_box()["x"] + top_column_header_element.bounding_box()["width"]
+            )
+            target_column_header_element = get_target_column_header_element(
+                column_headers[1],
+                coordinate_range[0],
+                coordinate_range[1]
+            )
         else:
-            x = column_header_handlers[0].bounding_box()["x"] + column_header_handlers[0].bounding_box()["width"] / 2
-        y = row_header_handler.bounding_box()["y"] + row_header_handler.bounding_box()["height"] / 2
-        return self._obj.evaluate_handle(f"document.elementFromPoint({x},{y})")
+            target_column_header_element = get_top_column_header_element(column_headers[0], column_min_x)
+        target_column_header_element_position = Position(
+            x=target_column_header_element.bounding_box()["x"] + target_column_header_element.bounding_box()[
+                "width"] / 2,
+            y=target_column_header_element.bounding_box()["y"] + target_column_header_element.bounding_box()[
+                "height"] / 2
+        )
+        cell_position = Position(
+            x=target_column_header_element_position.get("x"),
+            y=row_header_element_position.get("y")
+        )
+        return self._obj.evaluate_handle(
+            f"document.elementFromPoint({cell_position.get('x')}, {cell_position.get('y')})")
 
     def go_back(
             self,
